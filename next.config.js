@@ -10,6 +10,8 @@ const nextConfig = {
       "tailwindui.com",
       "ui-avatars.com",
       "api.lorem.space",
+      "images.unsplash.com",
+      "placeimg.com",
 
     ]
   }

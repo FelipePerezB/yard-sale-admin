@@ -1,24 +1,39 @@
-import { useState, useEffect } from 'react';
+import React from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import Pagination from '@components/Pagination';
-import useFetch from '@hooks/useFetch';
 import endPoints from '@services/api';
 import { useRouter } from 'next/router';
-import Chart from '@common/Chart';
+import axios from 'axios';
+import useAlert from '@hooks/useAlert';
 import Alert from '@common/alert';
 import Modal from '@common/Modal';
 import FormProduct from '@components/FormProduct';
-import useAlert from '@hooks/useAlert';
 import { deleteProduct } from '@services/api/products';
+import { XCircleIcon } from '@heroicons/react/solid';
 import Link from 'next/link';
-import { XCircleIcon } from '@heroicons/react/outline';
 import Image from 'next/image';
 
-export default function Dashboard() {
-  const ROWS = 5;
-  const productList = useFetch(endPoints.products.allProducts);
+function Table({rows}) {
+  const [productList, setProductList] = useState([]);
   const [currentPage, setCurrentPage] = useState(null);
-  const { alert, setAlert, toggleAlert } = useAlert();
   const [open, setOpen] = useState(false);
+  const { alert, setAlert, toggleAlert } = useAlert();
+
+  const fetchData = async () => {
+    const response = await axios.get(endPoints.products.allProducts);
+    setProductList(response.data);
+  };
+  const ROWS = rows;
+
+  useEffect(() => {
+    setTimeout(() => {
+      try {
+        fetchData();
+      } catch (error) {
+        console.error(error);
+      }
+    }, 1000);
+  }, [alert, open]);
 
   const location = useRouter();
 
@@ -43,18 +58,7 @@ export default function Dashboard() {
 
   const products = productList.filter((product) => productList.indexOf(product) >= currentPage * ROWS - ROWS && productList.indexOf(product) < currentPage * ROWS);
 
-  const categories = products.map((product) => product.category.name);
-  const countOccurrences = (array) => array.reduce((prev, curr) => ((prev[curr] = ++prev[curr] || 1), prev), {});
-  const data = {
-    datasets: [
-      {
-        label: 'Categories',
-        data: countOccurrences(categories),
-        borderWidth: 2,
-        backgroundColor: ['#ffbb11', '#c0c0c0', '#50AF95', '#f3ba2f', '#2a71d0'],
-      },
-    ],
-  };
+
   const handleDelete = (id) => {
     deleteProduct(id)
       .then(() => {
@@ -76,15 +80,9 @@ export default function Dashboard() {
         });
       });
   };
-
   return (
     <>
-      <Alert alert={alert} handleClose={toggleAlert} />
-      <Modal open={open} setOpen={setOpen}>
-        <FormProduct setOpen={setOpen} setAlert={setAlert} />
-      </Modal>
-      <Chart className={' mb-8 mt-2'} charData={data} />
-      <div className="flex flex-col">
+      <Alert alert={alert} handleClose={toggleAlert} /><div className="flex flex-col">
         <div className="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
           <div className="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
             <div className="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
@@ -119,7 +117,15 @@ export default function Dashboard() {
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
                               <div className="flex-shrink-0 h-10 w-10">
-                                <Image width={40} height={40} className="h-10 w-10 rounded-full" src={product?.images[0]} alt={product?.title} />
+                                <Image 
+                                  width={40}
+                                  height={40} 
+                                  className="h-10 w-10 rounded-full"
+                                  src={(product?.images[0])
+                                    ? product.images[0]
+                                    :"https://tailwindui.com/img/logos/workflow-mark-indigo-600.svg"
+                                  } 
+                                  alt={product?.title} />
                               </div>
                               <div className="ml-4">
                                 <div className="text-sm font-medium text-gray-900">{product?.title}</div>
@@ -131,7 +137,7 @@ export default function Dashboard() {
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{product?.id}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <div className="text-indigo-600 hover:text-indigo-900">
-                              <Link href={`dashboard/edit/${product?.id}`}>Edit</Link>
+                              <Link href={`edit/${product?.id}`}>Edit</Link>
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -144,15 +150,12 @@ export default function Dashboard() {
                 </tbody>
               </table>
             </div>
+            <Pagination limit={productList.length} rows={ROWS} currentPage={currentPage} numberOfProducts={products.length} />
           </div>
         </div>
       </div>
-            <Pagination
-              limit={productList.length}
-              rows={ROWS}
-              currentPage={currentPage}
-              numberOfProducts={products.length}
-            />
     </>
   );
 }
+
+export default Table;
