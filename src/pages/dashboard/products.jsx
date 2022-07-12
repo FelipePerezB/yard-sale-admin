@@ -34,28 +34,26 @@ export default function Products() {
     }, 1000);
   }, [alert, open]);
 
-  const location = useRouter();
+  const router = useRouter();
 
-  const getInitialPage = () => {
-    const hash = location.asPath.replace(location.route, '');
-    const initialPage = hash[0] === '#' ? Number(hash.replace('#', '')) : 1;
-    return initialPage;
-  };
+  const getPage = (hash) => (
+    (hash && hash!="")
+      ? Number(hash.replace("#", ""))
+      : 1
+    )
 
   const changePage = (event) => {
     const hash = event.path[0].location.hash;
-    const page = Number(hash.replace('#', ''));
+    const page = getPage(hash);
     setCurrentPage(page);
   };
 
   useEffect(() => {
-    {
-      currentPage === null ? setCurrentPage(getInitialPage()) : null;
-    }
+    setCurrentPage(getPage(window.location.hash))
     window?.addEventListener('popstate', (event) => changePage(event));
-  }, []);
+  }, [router?.isReady]);
 
-  const products = productList.filter((product) => productList.indexOf(product) >= currentPage * ROWS - ROWS && productList.indexOf(product) < currentPage * ROWS);
+  const products = productList.filter((product) => (productList.indexOf(product) >= ((currentPage * ROWS) - ROWS)) && (productList.indexOf(product) < currentPage * ROWS));
 
   const handleDelete = (id) => {
     deleteProduct(id)
@@ -168,10 +166,10 @@ export default function Products() {
                 </tbody>
               </table>
             </div>
-            <Pagination limit={productList.length} rows={ROWS} currentPage={currentPage} numberOfProducts={products.length} />
           </div>
         </div>
       </div>
+    <Pagination limit={productList.length} rows={ROWS} currentPage={currentPage} numberOfProducts={products.length} />
     </>
   );
 }

@@ -12,6 +12,7 @@ const nextConfig = {
       "api.lorem.space",
       "images.unsplash.com",
       "placeimg.com",
+      "img-global.cpcdn.com",
 
     ]
   }
